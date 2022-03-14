@@ -27,19 +27,11 @@ Parameters:
   pBackupTagKey1:
     Type: String 
     Description: The tag key 1 to automatically assign AWS Backup supported resources to a backup plan across the member accounts. 
-    Default: 'project'
+    Default: 'backup'
   pBackupTagValue1:
     Type: String 
     Description: The tag value 1 to automatically assign AWS Backup supported resources to a backup plan across the member accounts.
-    Default: 'aws-backup-demo'
-  pBackupTagKey2:
-    Type: String 
-    Description: The tag key 2 to automatically assign AWS Backup supported resources to a backup plan across the member accounts.
-    Default: 'environment'
-  pBackupTagValue2:
-    Type: String 
-    Description: The tag value 2 to automatically assign AWS Backup supported resources to a backup plan across the member accounts.
-    Default: 'aws-dev'
+    Default: 'true'
   pTagKey:
     Type: String 
     Description: This is the tag key to assign to resources created by CloudFormation.
@@ -186,166 +178,94 @@ Resources:
       PolicyContents: |-
             [
               {
-                  "plans": {
-                      "OrgDailyBackupPlan-1": {
-                          "regions": {
-                            "@@append":[ "us-east-1", "eu-central-1", "us-east-2", "us-west-2", "eu-west-1", "ap-southeast-1", "ap-southeast-2", "ca-central-1", "eu-north-1" ] },
-                          "rules": {
-                              "OrgDailyBackupRule": {
-                                  "schedule_expression": {
-                                      "@@assign": "SCHEDULE_EXPRESSION_1"
-                                  },
-                                  "start_backup_window_minutes": {
-                                      "@@assign": "480"
-                                  },
-                                  "complete_backup_window_minutes": {
-                                      "@@assign": "720"
-                                  },
-                                  "lifecycle": {
-                                      "delete_after_days": {
-                                          "@@assign": "5"
-                                      }
-                                  },
-                                  "target_backup_vault_name": {
-                                      "@@assign": "VAULT_NAME"
-                                  },
-                                  "recovery_point_tags": {
-                                      "project": {
-                                          "tag_key": {
-                                              "@@assign": "TAG_KEY"
-                                          },
-                                          "tag_value": {
-                                              "@@assign": "TAG_VALUE"
-                                          }
-                                      }
-                                  },
-                                  "copy_actions": {
-                                    "CENTRAL_VAULT_ARN": {
-                                      "target_backup_vault_arn": {
-                                        "@@assign": "CENTRAL_VAULT_ARN"
-                                      },
-                                      "lifecycle": {
-                                        "move_to_cold_storage_after_days": {
-                                          "@@assign": "30"
-                                        },
-                                        "delete_after_days": {
-                                          "@@assign": "365"
-                                        }
-                                      }
-                                  }
+                "plans": {
+                  "OrgDailyBackupPlan-1": {
+                    "regions": {
+                      "@@assign":[ "us-east-1" ] 
+                    },
+                    "rules": {
+                      "OrgDailyBackupRule": {
+                        "schedule_expression": {
+                            "@@assign": "SCHEDULE_EXPRESSION_1"
+                        },
+                        "lifecycle": {
+                            "delete_after_days": {
+                                "@@assign": "5"
+                            }
+                        },
+                        "target_backup_vault_name": {
+                            "@@assign": "VAULT_NAME"
+                        },
+                        "copy_actions": {
+                          "CENTRAL_VAULT_ARN": {
+                            "target_backup_vault_arn": {
+                              "@@assign": "CENTRAL_VAULT_ARN"
+                            },
+                            "lifecycle": {
+                              "move_to_cold_storage_after_days": {
+                                "@@assign": "30"
+                              },
+                              "delete_after_days": {
+                                "@@assign": "730"
                               }
-                            }                            
-                          },
-                          "backup_plan_tags": {
-                              "project": {
-                                  "tag_key": {
-                                      "@@assign": "TAG_KEY"
-                                  },
-                                  "tag_value": {
-                                      "@@assign": "TAG_VALUE"
-                                  }
-                              }
-                          },
-                          "selections": {
-                              "tags": {
-                                  "OrgDailyBackupSelection": {
-                                      "iam_role_arn": {
-                                          "@@assign": "arn:aws:iam::$account:role/BACKUP_ROLE"
-                                      },
-                                      "tag_key": {
-                                          "@@assign": "TAG_KEY_1"
-                                      },
-                                      "tag_value": {
-                                          "@@assign": [
-                                              "TAG_VALUE_1"
-                                          ]
-                                      }
-                                  }
-                              }
+                            }
                           }
-                      }
-                  }
-              },
-              {
-                  "plans": {
-                      "OrgDailyBackupPlan-2": {
-                          "regions": {
-                            "@@append":[ "us-east-1", "eu-central-1", "us-east-2", "us-west-2", "eu-west-1", "ap-southeast-1", "ap-southeast-2", "ca-central-1", "eu-north-1" ] },
-                          "rules": {
-                              "OrgDailyBackupRule": {
-                                  "schedule_expression": {
-                                      "@@assign": "SCHEDULE_EXPRESSION_2"
-                                  },
-                                  "start_backup_window_minutes": {
-                                      "@@assign": "480"
-                                  },
-                                  "complete_backup_window_minutes": {
-                                      "@@assign": "720"
-                                  },
-                                  "lifecycle": {
-                                      "delete_after_days": {
-                                          "@@assign": "5"
-                                      }
-                                  },
-                                  "target_backup_vault_name": {
-                                      "@@assign": "VAULT_NAME"
-                                  },
-                                  "recovery_point_tags": {
-                                      "project": {
-                                          "tag_key": {
-                                              "@@assign": "TAG_KEY"
-                                          },
-                                          "tag_value": {
-                                              "@@assign": "TAG_VALUE"
-                                          }
-                                      }
-                                  },
-                                  "copy_actions": {
-                                    "CENTRAL_VAULT_ARN": {
-                                      "target_backup_vault_arn": {
-                                        "@@assign": "CENTRAL_VAULT_ARN"
-                                      },
-                                      "lifecycle": {
-                                        "move_to_cold_storage_after_days": {
-                                          "@@assign": "30"
-                                        },
-                                        "delete_after_days": {
-                                          "@@assign": "365"
-                                        }
-                                      }
-                                  }
-                              }
-                            }                            
-                          },
-                          "backup_plan_tags": {
-                              "project": {
-                                  "tag_key": {
-                                      "@@assign": "TAG_KEY"
-                                  },
-                                  "tag_value": {
-                                      "@@assign": "TAG_VALUE"
-                                  }
-                              }
-                          },
-                          "selections": {
-                              "tags": {
-                                  "OrgDailyBackupSelection": {
-                                      "iam_role_arn": {
-                                          "@@assign": "arn:aws:iam::$account:role/BACKUP_ROLE"
-                                      },
-                                      "tag_key": {
-                                          "@@assign": "TAG_KEY_2"
-                                      },
-                                      "tag_value": {
-                                          "@@assign": [
-                                              "TAG_VALUE_2"
-                                          ]
-                                      }
-                                  }
-                              }
+                        }
+                      },
+                      "OrgContinuousBackupRule": {
+                        "schedule_expression": {
+                            "@@assign": "SCHEDULE_EXPRESSION_2"
+                        },
+                        "start_backup_window_minutes": {
+                          "@@assign": "60"
+                        },
+                        "complete_backup_window_minutes": {
+                          "@@assign": "120"
+                        },
+                        "lifecycle": {
+                          "delete_after_days": {
+                              "@@assign": "5"
                           }
+                        },
+                        "target_backup_vault_name": {
+                            "@@assign": "VAULT_NAME"
+                        },
+                        "enable_continuous_backup": {
+                          "@@assign": true
+                        },
+                        "copy_actions": {
+                          "CENTRAL_VAULT_ARN": {
+                            "target_backup_vault_arn": {
+                              "@@assign": "CENTRAL_VAULT_ARN"
+                            },
+                            "lifecycle": {
+                              "delete_after_days": {
+                                "@@assign": "5"
+                              }
+                            }
+                          }
+                        }
+                      }                         
+                    },
+                    "selections": {
+                      "tags": {
+                        "OrgDailyBackupSelection": {
+                          "iam_role_arn": {
+                            "@@assign": "arn:aws:iam::$account:role/BACKUP_ROLE"
+                          },
+                          "tag_key": {
+                            "@@assign": "TAG_KEY_1"
+                          },
+                          "tag_value": {
+                            "@@assign": [
+                                "TAG_VALUE_1"
+                            ]
+                          }
+                        }
                       }
+                    }
                   }
+                }
               }
             ]
       Variables:
@@ -353,8 +273,6 @@ Resources:
           - VAULT_NAME: !Ref pMemberAccountBackupVault
           - TAG_KEY_1 : !Ref "pBackupTagKey1"
           - TAG_VALUE_1 : !Ref "pBackupTagValue1"
-          - TAG_KEY_2 : !Ref "pBackupTagKey2"
-          - TAG_VALUE_2 : !Ref "pBackupTagValue2"
           - TAG_KEY : !Ref "pTagKey"
           - TAG_VALUE : !Ref "pTagValue"
           - SCHEDULE_EXPRESSION_1 : !Ref "pBackupScheduler1"
