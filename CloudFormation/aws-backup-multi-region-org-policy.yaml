@@ -24,6 +24,9 @@ Parameters:
   pCentralBackupVaultArn:
     Type: String
     Description: This is the ARN of the centralized account backup vault.
+  pCentralBackupVaultInUsWest2Arn:
+    Type: String
+    Description: This is the ARN of the centralized account backup vault in us-west-2.
   pBackupTagKey1:
     Type: String 
     Description: The tag key 1 to automatically assign AWS Backup supported resources to a single region backup plan across the member accounts. 
@@ -31,7 +34,7 @@ Parameters:
   pBackupTagValue1:
     Type: String 
     Description: The tag value 1 to automatically assign AWS Backup supported resources to a single region backup plan across the member accounts.
-    Default: 'true'
+    Default: 'multi-region'
   pTagKey:
     Type: String 
     Description: This is the tag key to assign to resources created by CloudFormation.
@@ -170,18 +173,18 @@ Resources:
   rOrgBackUpPolicy:
     Type: Custom::OrgPolicy
     Properties:
-      PolicyPrefix: org-backup-policy
+      PolicyPrefix: org-multi-region-backup-policy
       PolicyType: BACKUP_POLICY
       PolicyTargets : !Ref pOrgbackupAccounts
       PolicyDescription: >-
-        BackupPolicy for Daily Backup as per the resource selection criteria
+        BackupPolicy for Multi-Region Daily Backup as per the resource selection criteria
       PolicyContents: |-
         [
           {
             "plans": {
-              "OrgDailyBackupPlan-1": {
+              "OrgMultiRegionDailyBackupPlan-1": {
                 "regions": {
-                  "@@assign":[ "us-east-1" ] 
+                  "@@assign":[ "us-east-1", "us-west-2" ] 
                 },
                 "rules": {
                   "OrgDailyBackupRule": {
@@ -200,6 +203,32 @@ Resources:
                       "CENTRAL_VAULT_ARN": {
                         "target_backup_vault_arn": {
                           "@@assign": "CENTRAL_VAULT_ARN"
+                        },
+                        "lifecycle": {
+                          "move_to_cold_storage_after_days": {
+                            "@@assign": "30"
+                          },
+                          "delete_after_days": {
+                            "@@assign": "730"
+                          }
+                        }
+                      },
+                      "CENTRAL_US_WEST_2_VAULT_ARN": {
+                        "target_backup_vault_arn": {
+                          "@@assign": "CENTRAL_US_WEST_2_VAULT_ARN"
+                        },
+                        "lifecycle": {
+                          "move_to_cold_storage_after_days": {
+                            "@@assign": "30"
+                          },
+                          "delete_after_days": {
+                            "@@assign": "730"
+                          }
+                        }
+                      },
+                      "arn:aws:backup:us-west-2:$account:backup-vault:VAULT_NAME": {
+                        "target_backup_vault_arn": {
+                          "@@assign": "arn:aws:backup:us-west-2:$account:backup-vault:VAULT_NAME"
                         },
                         "lifecycle": {
                           "move_to_cold_storage_after_days": {
@@ -243,6 +272,26 @@ Resources:
                             "@@assign": "5"
                           }
                         }
+                      },
+                      "CENTRAL_US_WEST_2_VAULT_ARN": {
+                        "target_backup_vault_arn": {
+                          "@@assign": "CENTRAL_US_WEST_2_VAULT_ARN"
+                        },
+                        "lifecycle": {
+                          "delete_after_days": {
+                            "@@assign": "5"
+                          }
+                        }
+                      },
+                      "arn:aws:backup:us-west-2:$account:backup-vault:VAULT_NAME": {
+                        "target_backup_vault_arn": {
+                          "@@assign": "arn:aws:backup:us-west-2:$account:backup-vault:VAULT_NAME"
+                        },
+                        "lifecycle": {
+                          "delete_after_days": {
+                            "@@assign": "5"
+                          }
+                        }
                       }
                     }
                   }                         
@@ -269,23 +318,23 @@ Resources:
           }
         ]
       Variables:
-          - BACKUP_ROLE: !Ref "pCrossAccountBackupRole"
-          - VAULT_NAME: !Ref pMemberAccountBackupVault
-          - TAG_KEY_1 : !Ref "pBackupTagKey1"
-          - TAG_VALUE_1 : !Ref "pBackupTagValue1"
-          - TAG_KEY : !Ref "pTagKey"
-          - TAG_VALUE : !Ref "pTagValue"
-          - SCHEDULE_EXPRESSION_1 : !Ref "pBackupScheduler1"
-          - SCHEDULE_EXPRESSION_2 : !Ref "pBackupScheduler2"
-          - CENTRAL_VAULT_ARN : !Ref "pCentralBackupVaultArn"
+        - BACKUP_ROLE: !Ref "pCrossAccountBackupRole"
+        - VAULT_NAME: !Ref pMemberAccountBackupVault
+        - TAG_KEY_1 : !Ref "pBackupTagKey1"
+        - TAG_VALUE_1 : !Ref "pBackupTagValue1"
+        - TAG_KEY : !Ref "pTagKey"
+        - TAG_VALUE : !Ref "pTagValue"
+        - SCHEDULE_EXPRESSION_1 : !Ref "pBackupScheduler1"
+        - SCHEDULE_EXPRESSION_2 : !Ref "pBackupScheduler2"
+        - CENTRAL_VAULT_ARN : !Ref "pCentralBackupVaultArn"
+        - CENTRAL_US_WEST_2_VAULT_ARN : !Ref "pCentralBackupVaultInUsWest2Arn"
       ServiceToken: !GetAtt OrgPolicyCustomResourceManager.Arn
-      
-  
+        
   OrgPolicyCustomResourceManager:
     Type: AWS::Lambda::Function
     DependsOn: CopySolutionToLocalCacheBucket
     Properties:
-      FunctionName: OrgPolicyCustomResourceManager
+      FunctionName: MultiRegionOrgPolicyCustomResourceManager
       Description: Lambda function to deploy CloudFormation custom resources
                    to AWS Organizations.
       Handler: OrgPolicyCustomResourceManager.lambda_handler
